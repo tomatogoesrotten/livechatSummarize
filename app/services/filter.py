@@ -70,14 +70,14 @@ class MessageFilter:
             if pattern.search(text):
                 # Special handling for greetings - check if we should include them
                 if self.rules.include_greetings:
-                    # Only filter greetings that are ONLY greetings
+                    # If this is a pure greeting, keep it when include_greetings is True
                     greeting_only = re.match(
                         r"^(hi|hello|hey|thanks|thank you|bye|goodbye|good\s+(morning|afternoon|evening))\.?!?\s*$",
                         text,
                         re.IGNORECASE,
                     )
-                    if not greeting_only:
-                        continue  # Keep the message if it has more content
+                    if greeting_only:
+                        continue  # Keep pure greetings when include_greetings is enabled
                 return False
 
         return True
