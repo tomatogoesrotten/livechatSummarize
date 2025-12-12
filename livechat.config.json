@@ -1,33 +1,17 @@
 {
     "id": "s4-cuOGvg",
-    "name": "Chat Summarizer",
-    "short_description": "AI-powered chat summarization with CRM integration",
-    "description": "Automatically summarize chat conversations using AI. Creates tickets and sends summaries to your CRM. Triggered by chat end events or manual button click.",
-    "widgets": {
-        "agent_details": {
-            "url": "widget/index.html",
-            "icon": "https://cdn-icons-png.flaticon.com/512/3069/3069186.png",
-            "name": "Chat Summarizer",
-            "initial_state": "maximized"
-        }
-    },
-    "webhooks": {
-        "chat_deactivated": {
-            "url": "{{backend_url}}/webhooks/livechat",
-            "secret_key": "{{webhook_secret}}"
+    "name": "Chat Summarize Test",
+    "product": "livechat",
+    "blocks": {
+        "authorization": {
+            "clientId": "b39ccb402b1a490d4927545c5fe36647",
+            "type": "javascript_app",
+            "redirectUri": "http://localhost"
         },
-        "incoming_chat": {
-            "url": "{{backend_url}}/webhooks/livechat",
-            "secret_key": "{{webhook_secret}}"
+        "repository": {
+            "provider": "github",
+            "name": "tomatogoesrotten/livechatSummarize",
+            "branch": "main"
         }
-    },
-    "authorization": {
-        "client_id": "{{client_id}}",
-        "scopes": [
-            "chats--all:ro",
-            "chats--access:ro",
-            "tickets--all:rw",
-            "agents--all:ro"
-        ]
     }
 }
