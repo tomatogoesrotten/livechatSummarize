@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Summarizer</title>
+    <style>
+        :root {
+            --primary: #4a90d9;
+            --primary-hover: #3a7bc8;
+            --success: #28a745;
+            --error: #dc3545;
+            --warning: #ffc107;
+            --bg-dark: #1a1d21;
+            --bg-card: #2d3239;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a4a8;
+            --border: #3d4249;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 16px;
+        }
+        
+        .container {
+            max-width: 320px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .header p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .options {
+            margin-bottom: 20px;
+        }
+        
+        .option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .option:last-child {
+            border-bottom: none;
+        }
+        
+        .option-label {
+            font-size: 14px;
+        }
+        
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+        
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--border);
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+        
+        .toggle-slider::before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        
+        .toggle input:checked + .toggle-slider {
+            background: var(--primary);
+        }
+        
+        .toggle input:checked + .toggle-slider::before {
+            transform: translateX(20px);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .result {
+            display: none;
+            margin-top: 16px;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .result-header.success {
+            color: var(--success);
+        }
+        
+        .result-header.error {
+            color: var(--error);
+        }
+        
+        .result-content {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+        
+        .result-section {
+            margin-bottom: 12px;
+        }
+        
+        .result-section h4 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        
+        .result-section p {
+            color: var(--text-primary);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-positive { background: rgba(40, 167, 69, 0.2); color: var(--success); }
+        .badge-neutral { background: rgba(160, 164, 168, 0.2); color: var(--text-secondary); }
+        .badge-negative { background: rgba(220, 53, 69, 0.2); color: var(--error); }
+        
+        .badge-low { background: rgba(40, 167, 69, 0.2); color: var(--success); }
+        .badge-normal { background: rgba(74, 144, 217, 0.2); color: var(--primary); }
+        .badge-high { background: rgba(255, 193, 7, 0.2); color: var(--warning); }
+        .badge-critical { background: rgba(220, 53, 69, 0.2); color: var(--error); }
+        
+        .issues-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .issues-list li {
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+        
+        .issues-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+        }
+        
+        .no-chat {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .no-chat svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Chat Summarizer</h1>
+            <p>Generate intelligent summaries from chat conversations</p>
+        </div>
+        
+        <div id="no-chat" class="no-chat" style="display: none;">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+            <p>Select a chat to summarize</p>
+        </div>
+        
+        <div id="main-content">
+            <div class="card">
+                <div class="options">
+                    <div class="option">
+                        <span class="option-label">Create Ticket</span>
+                        <label class="toggle">
+                            <input type="checkbox" id="createTicket" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="option">
+                        <span class="option-label">Send to CRM</span>
+                        <label class="toggle">
+                            <input type="checkbox" id="sendToCrm" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="summarizeBtn" class="btn btn-primary">
+                    <span id="btnText">Summarize Chat</span>
+                    <div id="btnSpinner" class="spinner" style="display: none;"></div>
+                </button>
+            </div>
+            
+            <div id="result" class="result">
+                <div class="card">
+                    <div id="resultHeader" class="result-header"></div>
+                    <div id="resultContent" class="result-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.livechat.com/app-sdk/app-sdk-1.1.0.min.js"></script>
+    <script>
+        // Configuration - Update this with your backend URL
+        const API_BASE_URL = window.location.origin.includes('localhost') 
+            ? 'http://localhost:8000' 
+            : 'YOUR_BACKEND_URL_HERE';
+        
+        let currentChatId = null;
+        
+        // Initialize LiveChat App SDK
+        LiveChatAppSDK.init().then(function(sdk) {
+            console.log('LiveChat SDK initialized');
+            
+            // Get the current chat context
+            sdk.getContext().then(function(context) {
+                if (context.chat && context.chat.id) {
+                    currentChatId = context.chat.id;
+                    document.getElementById('no-chat').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+                } else {
+                    document.getElementById('no-chat').style.display = 'block';
+                    document.getElementById('main-content').style.display = 'none';
+                }
+            });
+            
+            // Listen for chat selection changes
+            sdk.on('chat_changed', function(chat) {
+                if (chat && chat.id) {
+                    currentChatId = chat.id;
+                    document.getElementById('no-chat').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+                    // Reset result when chat changes
+                    document.getElementById('result').classList.remove('show');
+                } else {
+                    currentChatId = null;
+                    document.getElementById('no-chat').style.display = 'block';
+                    document.getElementById('main-content').style.display = 'none';
+                }
+            });
+        }).catch(function(err) {
+            console.error('Failed to initialize SDK:', err);
+            // For testing outside LiveChat, use a test chat ID
+            currentChatId = 'test-chat-id';
+        });
+        
+        // Summarize button click handler
+        document.getElementById('summarizeBtn').addEventListener('click', async function() {
+            if (!currentChatId) {
+                showError('No chat selected');
+                return;
+            }
+            
+            const btn = this;
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('btnSpinner');
+            const createTicket = document.getElementById('createTicket').checked;
+            const sendToCrm = document.getElementById('sendToCrm').checked;
+            
+            // Show loading state
+            btn.disabled = true;
+            btnText.textContent = 'Summarizing...';
+            spinner.style.display = 'block';
+            document.getElementById('result').classList.remove('show');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/summarize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: currentChatId,
+                        create_ticket: createTicket,
+                        send_to_crm: sendToCrm,
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showSuccess(data);
+                } else {
+                    showError(data.detail || data.message || 'Summarization failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to connect to server');
+            } finally {
+                // Reset button state
+                btn.disabled = false;
+                btnText.textContent = 'Summarize Chat';
+                spinner.style.display = 'none';
+            }
+        });
+        
+        function showSuccess(data) {
+            const resultDiv = document.getElementById('result');
+            const header = document.getElementById('resultHeader');
+            const content = document.getElementById('resultContent');
+            
+            header.className = 'result-header success';
+            header.innerHTML = `
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Summary Generated
+            `;
+            
+            const summary = data.summary || {};
+            let issuesList = '';
+            if (summary.key_issues && summary.key_issues.length > 0) {
+                issuesList = '<ul class="issues-list">' + 
+                    summary.key_issues.map(issue => `<li>${escapeHtml(issue)}</li>`).join('') +
+                    '</ul>';
+            } else {
+                issuesList = '<p>No specific issues identified</p>';
+            }
+            
+            content.innerHTML = `
+                <div class="result-section">
+                    <h4>Summary</h4>
+                    <p>${escapeHtml(summary.summary || 'No summary available')}</p>
+                </div>
+                <div class="result-section">
+                    <h4>Key Issues</h4>
+                    ${issuesList}
+                </div>
+                <div class="result-section">
+                    <h4>Resolution</h4>
+                    <p>${escapeHtml(summary.resolution || 'Not specified')}</p>
+                </div>
+                <div class="result-section" style="display: flex; gap: 12px;">
+                    <div>
+                        <h4>Sentiment</h4>
+                        <span class="badge badge-${summary.sentiment || 'neutral'}">${summary.sentiment || 'neutral'}</span>
+                    </div>
+                    <div>
+                        <h4>Urgency</h4>
+                        <span class="badge badge-${summary.urgency || 'normal'}">${summary.urgency || 'normal'}</span>
+                    </div>
+                </div>
+                ${data.ticket_id ? `
+                <div class="result-section">
+                    <h4>Ticket ID</h4>
+                    <p>${escapeHtml(data.ticket_id)}</p>
+                </div>
+                ` : ''}
+                ${data.crm_sent ? `
+                <div class="result-section">
+                    <p style="color: var(--success);">✓ Sent to CRM</p>
+                </div>
+                ` : ''}
+            `;
+            
+            resultDiv.classList.add('show');
+        }
+        
+        function showError(message) {
+            const resultDiv = document.getElementById('result');
+            const header = document.getElementById('resultHeader');
+            const content = document.getElementById('resultContent');
+            
+            header.className = 'result-header error';
+            header.innerHTML = `
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Error
+            `;
+            
+            content.innerHTML = `<p>${escapeHtml(message)}</p>`;
+            resultDiv.classList.add('show');
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
+
